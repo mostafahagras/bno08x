@@ -1,0 +1,3 @@
+[submodule "lib/sh2"]
+	path = lib/sh2
+	url = https://github.com/mostafahagras/sh2.git
