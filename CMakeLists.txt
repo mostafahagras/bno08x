@@ -1,40 +1,34 @@
 cmake_minimum_required(VERSION 3.13)
 
-# Allow library to work standalone or as part of another project
-if (NOT DEFINED PICO_SDK_PATH)
-    # If not already set, use the environment variable
-    set(PICO_SDK_PATH $ENV{PICO_SDK_PATH})
+project(bno08x C)
+
+add_library(${PROJECT_NAME} INTERFACE)
+
+target_sources(${PROJECT_NAME} INTERFACE
+    ${CMAKE_CURRENT_LIST_DIR}/src/bno08x.c
+)
+
+target_include_directories(${PROJECT_NAME} INTERFACE
+    ${CMAKE_CURRENT_LIST_DIR}/include
+)
+
+target_link_libraries(${PROJECT_NAME} INTERFACE
+    pico_stdlib
+    hardware_i2c
+    hardware_gpio
+    hardware_timer
+)
+
+if(EXISTS ${CMAKE_CURRENT_LIST_DIR}/lib/sh2)
+    add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/lib/sh2)
+    target_link_libraries(${PROJECT_NAME} INTERFACE sh2)
+else()
+    message(FATAL_ERROR "SH2 library not found. Please ensure the Hillcrest SH2 library is available.")
 endif()
 
-# Import the Pico SDK
-include(pico_sdk_import.cmake)
-
-project(pico C CXX ASM)
-
-# Initialize the SDK (only if building standalone)
-if (NOT TARGET pico_stdlib)
-    pico_sdk_init()
+if(EXISTS ${CMAKE_CURRENT_LIST_DIR}/lib/sh2/include)
+    target_include_directories(${PROJECT_NAME} INTERFACE
+        ${CMAKE_CURRENT_LIST_DIR}/lib/sh2/include
+    )
 endif()
 
-add_subdirectory(lib/sh2)
-
-# Define the library
-add_library(bno08x STATIC
-    src/bno08x.c
-)
-
-# Include headers (public for users)
-target_include_directories(bno08x
-    PUBLIC 
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
-)
-
-# Link SDK dependencies
-target_link_libraries(bno08x
-    PRIVATE
-        pico_stdlib
-        hardware_i2c
-        hardware_spi
-        hardware_uart
-        sh2
-)
