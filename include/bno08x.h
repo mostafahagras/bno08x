@@ -1,16 +1,18 @@
 #ifndef __BNO08X_H
 #define __BNO08X_H
 
+#include "hardware/i2c.h"
 #include "sh2.h"
 #include "sh2_SensorValue.h"
-#include "hardware/i2c.h"
+#include <stdint.h>
 
 #define min(a, b) ((a) < (b) ? (a) : (b))
 
 #define BNO_ADDR 0x4A
 #define BUFFER_SIZE 32
 
-bool bno_begin_i2c(i2c_inst_t *i2c_inst, uint8_t addr, int8_t int_pin, int8_t reset_pin);
+bool bno_begin_i2c(i2c_inst_t *i2c_inst, uint8_t addr, int8_t int_pin,
+                   int8_t reset_pin);
 
 static void bno_hardware_reset(void);
 bool bno_was_reset(void);

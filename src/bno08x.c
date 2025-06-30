@@ -6,7 +6,7 @@
 #include "sh2_err.h"
 
 sh2_Hal_t _HAL;
-sh2_ProductIds_t prodIds; // Move this from header to here
+sh2_ProductIds_t prodIds;
 static sh2_SensorValue_t *_sensor_value = NULL;
 static bool _reset_occurred = false;
 static int8_t _int_pin, _reset_pin;
@@ -22,20 +22,19 @@ static void hal_callback(void *cookie, sh2_AsyncEvent_t *event);
 static void sensor_handler(void *cookie, sh2_SensorEvent_t *event);
 static void bno_hardware_reset(void);
 
-// Fixed: Proper error checking for I2C operations
 static inline bool i2c_read(uint8_t *buffer, unsigned len)
 {
     int result = i2c_read_blocking(_i2c_inst, _addr, buffer, len, false);
-    return (result == (int)len); // Success if we read the expected number of bytes
+    return (result == (int)len);
 }
 
 static inline bool i2c_write(uint8_t *buffer, unsigned len)
 {
     int result = i2c_write_blocking(_i2c_inst, _addr, buffer, len, false);
-    return (result == (int)len); // Success if we wrote the expected number of bytes
+    return (result == (int)len);
 }
 
-bool _init();
+bool init();
 
 bool bno_begin_i2c(i2c_inst_t *i2c_inst, uint8_t addr, int8_t int_pin, int8_t reset_pin)
 {
@@ -51,12 +50,12 @@ bool bno_begin_i2c(i2c_inst_t *i2c_inst, uint8_t addr, int8_t int_pin, int8_t re
     _reset_pin = reset_pin;
     _addr = addr;
     
-    return _init();
+    return init();
 }
 
-bool _init()
+bool init()
 {
-    printf("_init\n");
+    printf("init\n");
     int status;
 
     bno_hardware_reset();
@@ -80,7 +79,7 @@ bool _init()
            prodIds.entry[0], prodIds.entry[1], prodIds.entry[2], prodIds.entry[3]);
 
     sh2_setSensorCallback(sensor_handler, NULL);
-    printf("_init done\n");
+    printf("init done\n");
     return true;
 }
 
@@ -120,7 +119,6 @@ bool bno_enable_report(sh2_SensorId_t sensor_id, uint32_t interval_us)
     cfg.sensorSpecific = 0;
     cfg.reportInterval_us = interval_us;
 
-    // Fixed: Actually enable the sensor by calling setSensorConfig
     int status = sh2_setSensorConfig(sensor_id, &cfg);
 
     if (status != 0)
@@ -135,8 +133,7 @@ bool bno_enable_report(sh2_SensorId_t sensor_id, uint32_t interval_us)
 static int i2chal_open(sh2_Hal_t *self)
 {
     printf("i2chal_open\n");
-    // Fixed: Correct soft reset packet for BNO08X
-    uint8_t softreset_packet[] = {0x01, 0x00, 0x01, 0x00, 0x00};
+    uint8_t softreset_packet[] = {0x05, 0x00, 0x01, 0x00, 0x05};
     bool success = false;
     
     for (uint8_t attempts = 0; attempts < 5; attempts++)
@@ -147,7 +144,7 @@ static int i2chal_open(sh2_Hal_t *self)
             success = true;
             break;
         }
-        sleep_ms(50); // Increased delay between attempts
+        sleep_ms(50);
     }
     
     if (!success)
@@ -156,7 +153,7 @@ static int i2chal_open(sh2_Hal_t *self)
         return -1;
     }
     
-    sleep_ms(500); // Increased delay after reset
+    sleep_ms(500);
     printf("Soft reset successful\n");
     return 0;
 }
@@ -171,9 +168,9 @@ static int i2chal_read(sh2_Hal_t *self, uint8_t *buffer, unsigned len, uint32_t 
     // printf("i2chal_read (len=%d)\n", len);
     
     // Set timestamp when read begins
-    if (t_us) {
-        *t_us = time_us_32();
-    }
+    // if (t_us) {
+    //     *t_us = time_us_32();
+    // }
     
     // printf("\tReading header\n");
     uint8_t header[4];
@@ -271,16 +268,15 @@ static void bno_hardware_reset(void)
     printf("bno_hardware_reset\n");
     if (_reset_pin != -1)
     {
-        gpio_init(_reset_pin);
+        gpioinit(_reset_pin);
         gpio_set_dir(_reset_pin, GPIO_OUT);
         
-        // Fixed: Proper reset sequence with longer delays
         gpio_put(_reset_pin, 1);
-        sleep_ms(50);  // Increased delay
+        sleep_ms(50);
         gpio_put(_reset_pin, 0);
-        sleep_ms(50);  // Increased delay
+        sleep_ms(50);
         gpio_put(_reset_pin, 1);
-        sleep_ms(200); // Wait for device to fully start
+        sleep_ms(200);
     }
     else
     {
@@ -291,7 +287,7 @@ static void bno_hardware_reset(void)
 static uint32_t hal_get_time_us(sh2_Hal_t *self)
 {
     uint32_t t = time_us_32();
-    return t; // Removed excessive printf to reduce noise
+    return t;
 }
 
 static void hal_callback(void *cookie, sh2_AsyncEvent_t *event)
