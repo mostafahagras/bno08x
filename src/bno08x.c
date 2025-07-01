@@ -263,7 +263,7 @@ static void bno_hardware_reset(void)
     printf("bno_hardware_reset\n");
     if (_reset_pin != -1)
     {
-        gpioinit(_reset_pin);
+        gpio_init(_reset_pin);
         gpio_set_dir(_reset_pin, GPIO_OUT);
         
         gpio_put(_reset_pin, 1);
