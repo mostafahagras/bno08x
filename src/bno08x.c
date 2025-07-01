@@ -133,7 +133,7 @@ bool bno_enable_report(sh2_SensorId_t sensor_id, uint32_t interval_us)
 static int i2chal_open(sh2_Hal_t *self)
 {
     printf("i2chal_open\n");
-    uint8_t softreset_packet[] = {0x05, 0x00, 0x01, 0x00, 0x05};
+    uint8_t softreset_packet[] = {0x05, 0x00, 0x01, 0x00, 0x01};
     bool success = false;
     
     for (uint8_t attempts = 0; attempts < 5; attempts++)
@@ -166,11 +166,6 @@ static void i2chal_close(sh2_Hal_t *self)
 static int i2chal_read(sh2_Hal_t *self, uint8_t *buffer, unsigned len, uint32_t *t_us)
 {
     // printf("i2chal_read (len=%d)\n", len);
-    
-    // Set timestamp when read begins
-    // if (t_us) {
-    //     *t_us = time_us_32();
-    // }
     
     // printf("\tReading header\n");
     uint8_t header[4];
